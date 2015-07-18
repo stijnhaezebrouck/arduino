@@ -8,6 +8,12 @@ const unsigned int RANDOM_ITER = 2500;
 
 //non-LCD pins
 const int BUTTON = 2;
+const int SOUND_PIN = 13;
+const int SOUND_LENGTH = 100;
+const int TONE1 = 3000;
+const int TONE2 = 2500;
+const int NB_ALARM_SOUNDS=8;
+
 
 //LCD pins
 const int LCD_RS = 7;
@@ -53,11 +59,11 @@ const int S_RED = 4;
 
 //time management
 const unsigned long SEC = 1000;
-const unsigned long GREEN_DURATION=65*SEC;
-const unsigned long YELLOW_DURATION=10*SEC;
+const unsigned long GREEN_DURATION=1*SEC;
+const unsigned long YELLOW_DURATION=2*SEC;
 unsigned long yellowTime = 0;
 unsigned long redTime = 0;
-
+unsigned long countdown_sec=0;
 
 
 int nextTeamMemberIndex = 0;
@@ -103,7 +109,7 @@ void loop() {
   }
   
   if ((currentState == S_GREEN) || (currentState == S_YELLOW) || (currentState==S_RED)) {
-    showRemainingSeconds();
+    showRemainingSeconds(now);
   }
 }
 
@@ -113,14 +119,40 @@ void setGreen() {
 
 void setYellow() {
   currentState = S_YELLOW;
+  lcd.setCursor(4,1);
+  lcd.write("end now");
+  playWarning();
 }
 
 void setAlarm() {
   currentState = S_RED;
+  lcd.setCursor(4,1);
+  lcd.write("NEXT !!!");
+  playAlarm();
+  
 }
 
-void showRemainingSeconds() {
+void showRemainingSeconds(unsigned long time) {
+  
+  unsigned long currentRemaining = getRemainingSeconds(time);
+  if (currentRemaining != countdown_sec) {
+    countdown_sec = currentRemaining;
+    
+    lcd.setCursor(14,0);
+    if (countdown_sec < 10) {
+      lcd.print(" ");
+    }
+    lcd.print(countdown_sec);
+  }
 
+}
+
+unsigned long getRemainingSeconds(unsigned long time) {
+  if (time >= redTime) {
+    return 0;
+  }
+  return (redTime - time) / 1000;
+  
 }
 
 void startCountDown() {
@@ -180,8 +212,8 @@ void setReady() {
    lcd.setCursor(0,1);
    lcd.print(TEAM_SIZE);
    lcd.print(" team members");
-   
    currentState = S_READY;
+   playReady();
 }
 
 void randomize(String array[]) {
@@ -216,3 +248,26 @@ boolean buttonEvent() {
     return false;
   }
 }
+
+void playReady() {
+    tone(SOUND_PIN, 600, 100);
+    delay(100);
+    tone(SOUND_PIN, 1000, 100);
+}
+
+void playWarning() {
+   tone(SOUND_PIN, 5000, 25);
+   delay(50);
+   tone(SOUND_PIN, 5000, 25);
+   delay(50);
+}
+
+void playAlarm() {
+  for (int i = 0; i < NB_ALARM_SOUNDS; i++) {
+    tone(SOUND_PIN, TONE1, SOUND_LENGTH);
+    delay(SOUND_LENGTH);
+    tone(SOUND_PIN, TONE2, SOUND_LENGTH);
+    delay(SOUND_LENGTH);
+  }
+}
+
