@@ -110,7 +110,7 @@ void setup() {
   lcd.print("Press button to");
   lcd.setCursor(0, 1);
   lcd.print("shuffle");
-  playReady();
+  playInitialized();
 }
 
 void loop() {
@@ -246,7 +246,7 @@ void setReady() {
    lcd.print(TEAM_SIZE);
    lcd.print(" team members");
    currentState = S_READY;
-   playEndBeep();
+   playReadyBeep();
 }
 
 void setFinished() {
@@ -256,7 +256,7 @@ void setFinished() {
   lcd.setCursor(0,1);
   lcd.print("meeting");
   currentState = S_FINISHED;
-  playEndBeep();
+  playReadyBeep();
 }
 
 void randomize(String array[]) {
@@ -292,7 +292,7 @@ boolean buttonEvent() {
   }
 }
 
-void playReady() {
+void playInitialized() {
     tone(SOUND_PIN, 600, 100);
     delay(100);
     tone(SOUND_PIN, 1000, 100);
@@ -314,7 +314,7 @@ void playAlarm() {
   }
 }
 
-void playEndBeep() {
+void playReadyBeep() {
   tone(SOUND_PIN, 2000, 200);
 }
 
