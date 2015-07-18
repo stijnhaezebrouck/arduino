@@ -1,25 +1,26 @@
 #include <LiquidCrystal.h>
+
+//TEAM
 String team[] = {"Nicolas", "Stéphane", "Rabha", "Baptiste", "Davy", "Géraldine", "Jean-François", "Stijn"};
 const int TEAM_SIZE = 8;
 
+const unsigned int RANDOM_ITER = 2500;
+
+//non-LCD pins
 const int BUTTON = 2;
-const int RS = 7;
-const int ENABLE = 8;
-const int D4 = 9;
-const int D5 = 10;
-const int D6 = 11;
-const int D7 = 12;
-LiquidCrystal lcd(RS, ENABLE, D4, D5, D6, D7);
+
+//LCD pins
+const int LCD_RS = 7;
+const int LCD_ENABLE = 8;
+const int LCD_D4 = 9;
+const int LCD_D5 = 10;
+const int LCD_D6 = 11;
+const int LCD_D7 = 12;
+LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
+
+//custom characters
 const byte EACUTE = 1;
 const byte CCEDILLE = 2;
-const unsigned int RANDOM_ITER = 2500;
-int currentMember = 0;
-
-boolean previousButtonState = false;
-boolean buttonEventGenerated = false;
-boolean isReady = false;
-
-
 
 byte EACUTE_CHAR[8] = {
   B00010,
@@ -42,10 +43,23 @@ byte CEDI_CHAR[8] = {
   B01100
 };
 
+
+// states
+const int S_INITIAL = 0;
+const int S_READY = 1;
+const int S_GREEN = 2;
+const int S_YELLOW = 3;
+const int S_RED_ALARM = 4;
+const int S_RED_END = 5;
+
+
+int nextTeamMemberIndex = 0;
+
+boolean previousButtonState = false;
+boolean buttonEventGenerated = false;
+int currentState = S_INITIAL;
+
 void setup() {
-
-  //randomSeed(analogRead(0));
-
   //BUTTON setup
   pinMode(BUTTON, INPUT);
 
@@ -60,21 +74,29 @@ void setup() {
 
 void loop() {
   generateButtonEvent();
-  if (! isReady && buttonEvent()) {
-    shuffle();
-    showReady();
-  }
-  if (! isReady) return;
-  
   if (buttonEvent()) {
-     if (currentMember < TEAM_SIZE) {
-       showMember(team[currentMember]);
-       currentMember++;
-     } else {
-       showReady();
-       currentMember = 0;
-     }
-     
+    switch(currentState) {
+      case S_INITIAL:
+        shuffle();
+        setReady();
+        break;
+      default:
+        nextTeamMember();      
+        break; 
+    }
+  }
+}
+
+void startCountDown() {
+}
+
+void nextTeamMember() {
+  if (nextTeamMemberIndex == TEAM_SIZE) {
+    nextTeamMemberIndex = 0;
+    setReady();
+  } else {
+    showMember(team[nextTeamMemberIndex++]);
+    startCountDown();
   }
 }
 
@@ -105,30 +127,30 @@ void printStringChar(String charToPrint) {
   }
 }
 
-
 void shuffle() {
   lcd.clear();
   lcd.print("Shuffling...");
   randomSeed(millis());
   randomize(team);
-  isReady = true;
 }
 
-void showReady() {
+void setReady() {
    lcd.clear();
    lcd.print("Ready to start");
    lcd.setCursor(0,1);
    lcd.print(TEAM_SIZE);
    lcd.print(" team members");
+   
+   currentState = S_READY;
 }
 
-void randomize(String permutatie[]) {
+void randomize(String array[]) {
   int a = 0;
   int b = 0;
   for (unsigned int i = 0; i < RANDOM_ITER; i++) {
     a = random(0, TEAM_SIZE);
     b = random(0, TEAM_SIZE);
-    swap(permutatie, a, b);
+    swap(array, a, b);
   }
 }
 
