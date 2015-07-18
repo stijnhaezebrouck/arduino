@@ -1,8 +1,13 @@
 #include <LiquidCrystal.h>
 
 //TEAM
-String team[] = {"Nicolas", "Stéphane", "Rabha", "Baptiste", "Davy", "Géraldine", "Jean-François", "Stijn"};
-const int TEAM_SIZE = 8;
+String team[] = {"Nicolas", "Rabha", "Baptiste", "Davy", "Géraldine", "Stijn"};
+const int TEAM_SIZE = 6;
+
+const unsigned long SEC = 1000;
+const unsigned long GREEN_DURATION=65*SEC;
+const unsigned long YELLOW_DURATION=10*SEC;
+
 
 const unsigned int RANDOM_ITER = 2500;
 
@@ -23,6 +28,11 @@ const int LCD_D5 = 10;
 const int LCD_D6 = 11;
 const int LCD_D7 = 12;
 LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
+
+//LED pins
+const int GREEN_LED = 6;
+const int YELLOW_LED = 5;
+const int RED_LED = 4;
 
 //custom characters
 const byte EACUTE = 1;
@@ -56,11 +66,9 @@ const int S_READY = 1;
 const int S_GREEN = 2;
 const int S_YELLOW = 3;
 const int S_RED = 4;
+const int S_FINISHED = 5;
 
 //time management
-const unsigned long SEC = 1000;
-const unsigned long GREEN_DURATION=1*SEC;
-const unsigned long YELLOW_DURATION=2*SEC;
 unsigned long yellowTime = 0;
 unsigned long redTime = 0;
 unsigned long countdown_sec=0;
@@ -73,16 +81,36 @@ boolean buttonEventGenerated = false;
 int currentState = S_INITIAL;
 
 void setup() {
-  //BUTTON setup
-  pinMode(BUTTON, INPUT);
-
-  //LCD setup
+  pinMode(LCD_RS, OUTPUT);
+  pinMode(LCD_ENABLE, OUTPUT);
+  pinMode(LCD_D4, OUTPUT);
+  pinMode(LCD_D5, OUTPUT);
+  pinMode(LCD_D6, OUTPUT);
+  pinMode(LCD_D7, OUTPUT);
+  
+  
   lcd.createChar(EACUTE, EACUTE_CHAR);
   lcd.createChar(CCEDILLE, CEDI_CHAR);
   lcd.begin(16, 2);
+  
+  //BUTTON setup
+  pinMode(BUTTON, INPUT);
+  
+  pinMode(SOUND_PIN, OUTPUT);
+  pinMode(RED_LED, OUTPUT);
+  pinMode(YELLOW_LED, OUTPUT);
+  pinMode(GREEN_LED, OUTPUT);
+  
+  
+  
+  allLedsOn();
+  delay(400);
+  allLedsOff();
+
   lcd.print("Press button to");
   lcd.setCursor(0, 1);
   lcd.print("shuffle");
+  playReady();
 }
 
 void loop() {
@@ -102,9 +130,11 @@ void loop() {
   unsigned long now = millis();
 
   if ((currentState == S_GREEN) && (now >= yellowTime)) {
+    showRemainingSeconds(now);
     setYellow();
   }
   if ((currentState == S_YELLOW) && (now >= redTime)) {
+    showRemainingSeconds(now);
     setAlarm();
   }
   
@@ -115,12 +145,14 @@ void loop() {
 
 void setGreen() {
   currentState = S_GREEN;
+  ledOn(GREEN_LED);
 }
 
 void setYellow() {
   currentState = S_YELLOW;
   lcd.setCursor(4,1);
   lcd.write("end now");
+  ledOn(YELLOW_LED);
   playWarning();
 }
 
@@ -128,6 +160,7 @@ void setAlarm() {
   currentState = S_RED;
   lcd.setCursor(4,1);
   lcd.write("NEXT !!!");
+  ledOn(RED_LED);
   playAlarm();
   
 }
@@ -151,7 +184,7 @@ unsigned long getRemainingSeconds(unsigned long time) {
   if (time >= redTime) {
     return 0;
   }
-  return (redTime - time) / 1000;
+  return (redTime - time) / 1000 + 1;
   
 }
 
@@ -165,7 +198,7 @@ void startCountDown() {
 void nextTeamMember() {
   if (nextTeamMemberIndex == TEAM_SIZE) {
     nextTeamMemberIndex = 0;
-    setReady();
+    setFinished();
   } else {
     showMember(team[nextTeamMemberIndex++]);
     startCountDown();
@@ -213,7 +246,17 @@ void setReady() {
    lcd.print(TEAM_SIZE);
    lcd.print(" team members");
    currentState = S_READY;
-   playReady();
+   playEndBeep();
+}
+
+void setFinished() {
+  allLedsOff();
+  lcd.clear();
+  lcd.print("End of stand-up");
+  lcd.setCursor(0,1);
+  lcd.print("meeting");
+  currentState = S_FINISHED;
+  playEndBeep();
 }
 
 void randomize(String array[]) {
@@ -269,5 +312,27 @@ void playAlarm() {
     tone(SOUND_PIN, TONE2, SOUND_LENGTH);
     delay(SOUND_LENGTH);
   }
+}
+
+void playEndBeep() {
+  tone(SOUND_PIN, 2000, 200);
+}
+
+void allLedsOn() {
+  digitalWrite(RED_LED, HIGH);
+  digitalWrite(YELLOW_LED, HIGH);
+  digitalWrite(GREEN_LED, HIGH);
+}
+
+void allLedsOff() {
+  digitalWrite(RED_LED, LOW);
+  digitalWrite(YELLOW_LED, LOW);
+  digitalWrite(GREEN_LED, LOW);
+}
+
+void ledOn(int ledPin) {
+  digitalWrite(RED_LED, (ledPin == RED_LED) ? HIGH : LOW);
+  digitalWrite(YELLOW_LED, (ledPin == YELLOW_LED) ? HIGH : LOW);
+  digitalWrite(GREEN_LED, (ledPin == GREEN_LED) ? HIGH : LOW);
 }
 
