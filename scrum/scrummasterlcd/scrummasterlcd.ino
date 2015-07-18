@@ -12,7 +12,6 @@ const int D7 = 12;
 LiquidCrystal lcd(RS, ENABLE, D4, D5, D6, D7);
 const byte EACUTE = 1;
 const byte CCEDILLE = 2;
-int permutatie[TEAM_SIZE];
 const unsigned int RANDOM_ITER = 2500;
 int currentMember = 0;
 
@@ -62,14 +61,14 @@ void setup() {
 void loop() {
   generateButtonEvent();
   if (! isReady && buttonEvent()) {
-    initPermutation();
+    shuffle();
     showReady();
   }
   if (! isReady) return;
   
   if (buttonEvent()) {
      if (currentMember < TEAM_SIZE) {
-       showMember(team[permutatie[currentMember]]);
+       showMember(team[currentMember]);
        currentMember++;
      } else {
        showReady();
@@ -84,13 +83,14 @@ void showMember(String member) {
      
     int i = 0;
     while (i<member.length()) {
-      String s = String(member.charAt(i));
+      String stringChar = String(member.charAt(i));
+      //in case of UTF-8 is the first byte negative. Assume max utf8 length 2 bytes for char
       if (member.charAt(i) < 0) {
-        s.concat(member.charAt(i+1));
+        stringChar.concat(member.charAt(i+1));
         i++;
       } 
       i++;
-      printStringChar(s);
+      printStringChar(stringChar);
     }
     lcd.setCursor(0,1);
 }
@@ -106,14 +106,11 @@ void printStringChar(String charToPrint) {
 }
 
 
-void initPermutation() {
+void shuffle() {
   lcd.clear();
   lcd.print("Shuffling...");
   randomSeed(millis());
-  for (int i = 0; i < TEAM_SIZE; i++) {
-    permutatie[i]=i;
-  }
-  randomize(permutatie);
+  randomize(team);
   isReady = true;
 }
 
@@ -125,7 +122,7 @@ void showReady() {
    lcd.print(" team members");
 }
 
-void randomize(int permutatie[]) {
+void randomize(String permutatie[]) {
   int a = 0;
   int b = 0;
   for (unsigned int i = 0; i < RANDOM_ITER; i++) {
@@ -135,8 +132,8 @@ void randomize(int permutatie[]) {
   }
 }
 
-void swap(int array[], int i, int j) {
-  int swap = array[i];
+void swap(String array[], int i, int j) {
+  String swap = array[i];
   array[i] = array[j];
   array[j] = swap;
 }
