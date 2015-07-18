@@ -1,4 +1,8 @@
 #include <LiquidCrystal.h>
+char *team[] = {"Nicolas", "Stéphane", "Rabha", "Baptiste", "Davy", "Géraldine", "Jean-François", "Stijn"};
+const int TEAM_SIZE = 8;
+
+const int BUTTON = 2;
 const int RS = 7;
 const int ENABLE = 8;
 const int D4 = 9;
@@ -6,15 +10,16 @@ const int D5 = 10;
 const int D6 = 11;
 const int D7 = 12;
 LiquidCrystal lcd(RS, ENABLE, D4, D5, D6, D7);
-char *TEAM[] = {"nul", "een", "twee", "drie", "vier", "Géraldine", "vijf", "zes" };
-const int TEAM_SIZE = sizeof(TEAM) / 2;
 const byte EACUTE = 1;
 const byte CCEDILLE = 2;
-const byte HARTJE=3;
-const byte HUISJE=4;
-const byte VLOKJE=5;
-int permutatie[] = {1, 2, 3, 4, 5, 6, 7, 8};
-const byte RANDOM_ITER=100;
+int permutatie[TEAM_SIZE];
+const unsigned int RANDOM_ITER = 2500;
+int currentMember = 0;
+
+boolean previousButtonState = false;
+boolean buttonEventGenerated = false;
+boolean isReady = false;
+
 
 
 byte EACUTE_CHAR[8] = {
@@ -35,82 +40,87 @@ byte CEDI_CHAR[8] = {
   B10000,
   B01110,
   B00100,
-  B01100  
-};
-byte HARTJE_CHAR[8] {
-    B00000,
-    B00000,
-    B01010,
-    B11111,
-    B11111,
-    B01110,
-    B00100,
-    B00000
-};
-byte HUISJE_CHAR[8] {
-  B00000,
-  B00100,
-  B01110,
-  B10101,
-  B11111,
-  B11111,
-  B11011,
-  B11011
-};
-byte VLOKJE_CHAR[8] {
-  B00100,
-  B01010,
-  B00100,
-  B00100,
-    B00100,
-  B00100,
-  B00100,
-  B00100
+  B01100
 };
 
 void setup() {
-  
-  randomSeed(analogRead(0));
-  
+
+  //randomSeed(analogRead(0));
+
+  //BUTTON setup
+  pinMode(BUTTON, INPUT);
+
   //LCD setup
-  lcd.createChar(EACUTE, EACUTE_CHAR);
-  lcd.createChar(CCEDILLE, CEDI_CHAR);
-  lcd.createChar(HARTJE, HARTJE_CHAR);
-  lcd.createChar(HUISJE, HUISJE_CHAR);
-  lcd.createChar(VLOKJE, VLOKJE_CHAR);
+  //lcd.createChar(EACUTE, EACUTE_CHAR);
+  //lcd.createChar(CCEDILLE, CEDI_CHAR);
   lcd.begin(16, 2);
-  
-  randomize(permutatie);
-  
-  
-  
-  lcd.print("Hanne ");
-  lcd.write(HARTJE);
-  lcd.print(" ");
-  lcd.write(HUISJE);
-  lcd.print(" ");
-  lcd.write(VLOKJE);
-  lcd.print(" *");
-  lcd.setCursor(0,1);
-  for (int i = 0; i < TEAM_SIZE; i++) {
-      lcd.print(permutatie[i]);
-      lcd.print(" ");
-  }
-  
+  lcd.print("Press button to");
+  lcd.setCursor(0, 1);
+  lcd.print("shuffle");
 }
 
 void loop() {
+  generateButtonEvent();
+  if (! isReady && buttonEvent()) {
+    initPermutation();
+    showReady();
+  }
+  if (! isReady) return;
   
-  
-  
-  // put your main code here, to run repeatedly:
+  if (buttonEvent()) {
+     if (currentMember < TEAM_SIZE) {
+       showMember(team[permutatie[currentMember]]);
+       currentMember++;
+     } else {
+       showReady();
+       currentMember = 0;
+     }
+     
+  }
+}
 
+void showMember(char *member) {
+    lcd.clear();
+    int i = 0;
+    while (member[i] != 0) {
+      printChar(member[i++]);
+    }
+}
+
+void printChar(char charToPrint) {
+  if (charToPrint == 'é') {
+    lcd.write(EACUTE);
+  } else if (charToPrint == 'ç') {
+    lcd.write(CCEDILLE);
+  } else {
+    lcd.print(charToPrint);
+  }
+}
+
+
+void initPermutation() {
+  lcd.clear();
+  lcd.print("Shuffling...");
+  randomSeed(millis());
+  for (int i = 0; i < TEAM_SIZE; i++) {
+    permutatie[i]=i;
+  }
+  randomize(permutatie);
+  isReady = true;
+}
+
+void showReady() {
+   lcd.clear();
+   lcd.print("Ready to start");
+   lcd.setCursor(0,1);
+   lcd.print(TEAM_SIZE);
+   lcd.print(" team members");
 }
 
 void randomize(int permutatie[]) {
   int a = 0;
   int b = 0;
-  for (int i = 0; i < RANDOM_ITER; i++) {
+  for (unsigned int i = 0; i < RANDOM_ITER; i++) {
     a = random(0, TEAM_SIZE);
     b = random(0, TEAM_SIZE);
     swap(permutatie, a, b);
@@ -118,11 +128,24 @@ void randomize(int permutatie[]) {
 }
 
 void swap(int array[], int i, int j) {
-    int swap = array[i];
-    array[i] = array[j];
-    array[j] = swap;
+  int swap = array[i];
+  array[i] = array[j];
+  array[j] = swap;
 }
 
-int arraySize(char **charArray) {
-    return sizeof(charArray) / 2;
+void generateButtonEvent() {
+  boolean buttonPress = (digitalRead(BUTTON) == HIGH);
+  if ((! buttonPress) && previousButtonState) {
+    buttonEventGenerated = true;
+  }
+  previousButtonState = buttonPress;
+}
+
+boolean buttonEvent() {
+  if (buttonEventGenerated) {
+    buttonEventGenerated = false;
+    return true;
+  } else {
+    return false;
+  }
 }
