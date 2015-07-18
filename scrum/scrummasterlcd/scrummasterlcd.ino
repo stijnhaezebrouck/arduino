@@ -1,5 +1,5 @@
 #include <LiquidCrystal.h>
-char *team[] = {"Nicolas", "Stéphane", "Rabha", "Baptiste", "Davy", "Géraldine", "Jean-François", "Stijn"};
+String team[] = {"Nicolas", "Stéphane", "Rabha", "Baptiste", "Davy", "Géraldine", "Jean-François", "Stijn"};
 const int TEAM_SIZE = 8;
 
 const int BUTTON = 2;
@@ -51,8 +51,8 @@ void setup() {
   pinMode(BUTTON, INPUT);
 
   //LCD setup
-  //lcd.createChar(EACUTE, EACUTE_CHAR);
-  //lcd.createChar(CCEDILLE, CEDI_CHAR);
+  lcd.createChar(EACUTE, EACUTE_CHAR);
+  lcd.createChar(CCEDILLE, CEDI_CHAR);
   lcd.begin(16, 2);
   lcd.print("Press button to");
   lcd.setCursor(0, 1);
@@ -79,18 +79,26 @@ void loop() {
   }
 }
 
-void showMember(char *member) {
+void showMember(String member) {
     lcd.clear();
+     
     int i = 0;
-    while (member[i] != 0) {
-      printChar(member[i++]);
+    while (i<member.length()) {
+      String s = String(member.charAt(i));
+      if (member.charAt(i) < 0) {
+        s.concat(member.charAt(i+1));
+        i++;
+      } 
+      i++;
+      printStringChar(s);
     }
+    lcd.setCursor(0,1);
 }
 
-void printChar(char charToPrint) {
-  if (charToPrint == 'é') {
+void printStringChar(String charToPrint) {
+  if (charToPrint.equals(String("é"))) {
     lcd.write(EACUTE);
-  } else if (charToPrint == 'ç') {
+  } else if (charToPrint.equals(String("ç"))) {
     lcd.write(CCEDILLE);
   } else {
     lcd.print(charToPrint);
