@@ -49,8 +49,15 @@ const int S_INITIAL = 0;
 const int S_READY = 1;
 const int S_GREEN = 2;
 const int S_YELLOW = 3;
-const int S_RED_ALARM = 4;
-const int S_RED_END = 5;
+const int S_RED = 4;
+
+//time management
+const unsigned long SEC = 1000;
+const unsigned long GREEN_DURATION=65*SEC;
+const unsigned long YELLOW_DURATION=10*SEC;
+unsigned long yellowTime = 0;
+unsigned long redTime = 0;
+
 
 
 int nextTeamMemberIndex = 0;
@@ -85,9 +92,42 @@ void loop() {
         break; 
     }
   }
+  
+  unsigned long now = millis();
+
+  if ((currentState == S_GREEN) && (now >= yellowTime)) {
+    setYellow();
+  }
+  if ((currentState == S_YELLOW) && (now >= redTime)) {
+    setAlarm();
+  }
+  
+  if ((currentState == S_GREEN) || (currentState == S_YELLOW) || (currentState==S_RED)) {
+    showRemainingSeconds();
+  }
+}
+
+void setGreen() {
+  currentState = S_GREEN;
+}
+
+void setYellow() {
+  currentState = S_YELLOW;
+}
+
+void setAlarm() {
+  currentState = S_RED;
+}
+
+void showRemainingSeconds() {
+
 }
 
 void startCountDown() {
+  unsigned long now = millis();
+  yellowTime = now + GREEN_DURATION;
+  redTime = yellowTime + YELLOW_DURATION;
+  setGreen();  
 }
 
 void nextTeamMember() {
