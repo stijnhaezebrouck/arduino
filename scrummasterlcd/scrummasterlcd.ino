@@ -5,7 +5,7 @@ String team[] = {"Nicolas", "Rabha", "Baptiste", "Davy", "Géraldine", "Stijn"};
 const int TEAM_SIZE = 6;
 
 const unsigned long SEC = 1000;
-const unsigned long GREEN_DURATION=65*SEC;
+const unsigned long GREEN_DURATION=80*SEC;
 const unsigned long YELLOW_DURATION=10*SEC;
 
 
